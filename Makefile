@@ -1,8 +1,8 @@
-CFLAGS	= -g
+CXXFLAGS	= -g
 
 .PHONY: all
 
 all: vm
 
-vm: vm.c vm.h
-	$(CC) vm.c -o vm -Wall $(CFLAGS)
+vm: vm.cpp vm.h
+	$(CXX) vm.cpp -o vm -Wall $(CXXFLAGS)

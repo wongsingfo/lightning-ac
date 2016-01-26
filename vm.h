@@ -1,5 +1,3 @@
-#define MemoryPool 0x100000 * 10
-
 #ifndef ONLINE_JUDGE
 #define errorp(...) fprintf(stderr, __VA_ARGS__)
 #else
@@ -24,12 +22,9 @@ enum systemFunction {
   RINT = 300, WINT, GETC, PUTC
 };
 
-
-int VMRun(const long long* const text, int lenText, long long idMain) {
+int VMRun(int debug) {
   long long i;
-  for (i = 0; i < lenText; i++) m[i] = text[i];
-  
-  long long cur = idMain;
+  long long cur = 0;
   long long bp, sp = MemoryPool - 1; // stack pointer
   long long reg; // only one register
   
