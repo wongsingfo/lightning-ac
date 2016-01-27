@@ -21,12 +21,12 @@ void printHelp() {
         "  -2 compile error\n"
         "\n"
         "usage:\n"
-        "  S    generate a code for submission online\n"
-        "  I    interpre\n"
-        "  D    debug\n"
+        "  s    generate a code for submission online\n"
+        "  i    interpre\n"
+        //"  d    debug\n"
         "\n"
         "example:\n"
-        "  ./vm S code.vm\n");
+        "  ./vm s code.vm\n");
 }
 
 #define report(...) fprintf(stderr, __VA_ARGS__), exit(-1)
@@ -34,9 +34,9 @@ void printHelp() {
 void argument(int argc, char* argv[]) {
   if (argc != 3) {printHelp(); report("no input.\n");}
 
-  if (argv[1][0] == 'S') Todo = submit;
-  else if (argv[1][0] == 'I') Todo = interpre;
-  else if (argv[1][0] == 'D') Todo = debug;
+  if (argv[1][0] == 's') Todo = submit;
+  else if (argv[1][0] == 'i') Todo = interpre;
+  else if (argv[1][0] == 'd') Todo = debug;
 
   if (! Todo) report("nothing to be done.\n");
   char* fileName = argv[2];
@@ -252,6 +252,10 @@ int main(int argc, char* argv[]) {
         "int i; for (i = 0; i < %d; i++) m[i] = text[i];\n", (int) text.size());
     printf("VMRun();\n" 
         "return 0;}\n");
+  }
+  else if (Todo == interpre) {
+    for (int i = 0, _i = (int) text.size(); i < _i; i++) m[i] = text[i];
+    VMRun();
   }
 
   return 0;

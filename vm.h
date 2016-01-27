@@ -1,6 +1,6 @@
 #ifndef ONLINE_JUDGE
 #define errorp(...) fprintf(stderr, __VA_ARGS__)
-#define vmdebug
+//#define vmdebug
 #else
 #define errorp(...) ;
 #endif
