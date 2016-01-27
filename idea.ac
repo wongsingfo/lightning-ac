@@ -1,0 +1,30 @@
+
+var
+ a b[3][9] c[10]
+end
+
+[1]->c
+[2][1]->b
+
+rise i in [0, n): 
+rise i in [0, n) skip 2: 
+
+reduce i in (n, 0]: 
+reduce i in (n, 0] skip 5;
+
+for n:
+
+while 1 == 2:
+
+break; continue;
+
+if a > b:
+else:
+end
+
+if a > c: 
+end
+
+def run(a b c):
+  return 1
+end
