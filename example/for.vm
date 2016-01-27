@@ -1,0 +1,41 @@
+; this code will print from 23 to 233
+
+@size=233
+@from=23
+
+JMP main
+@main
+ENT 1
+
+; int i = 1
+LEA -1 PSH
+  IMM from 
+STO
+
+; while (i <= size)
+@while_1
+
+LEA -1 LOD PSH
+IMM size LE
+
+JZ return_1
+
+;print i
+LEA -1 LOD WINT
+
+;print endl
+IMM 10 PUTC
+
+;i = i + 1
+LEA -1 PSH 
+  LOD PSH 
+    IMM 1
+  ADD
+STO
+
+JMP while_1
+
+@return_1
+LEV
+
+; {103,2,108,1,102,-1,107,101,1,106,102,-1,100,107,101,10,209,104,26,102,-1,100,301,101,1,200,107,109}

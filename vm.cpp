@@ -46,7 +46,7 @@ void argument(int argc, char* argv[]) {
     int lenCode = ftell(input);
     code = new char[lenCode + 1];
     if (fseek(input, 0, SEEK_SET)) report_close("seek_set error.\n");
-    if (lenCode != (int) fread(input, 1, lenCode, input)) report_close("couldn't read the code!\n");
+    if (lenCode != (int) fread(code, 1, lenCode, input)) report_close("couldn't read the code!\n");
     code[lenCode] = 0; // append '\0'
     if (fclose(input)) report("couldn't close '%s'", fileName);
   }
@@ -58,10 +58,11 @@ int line, column;
 char* line_front;
 
 void report_compile_error(const char* const msg) {
+  fprintf(stderr, "%4d: ", line);
   while (*line_front != '\n' && *line_front) 
-    fprintf(stderr, "%c", *line_front);
+    fprintf(stderr, "%c", *line_front++);
   fprintf(stderr, "\n");
-  for (int i = 2; i < column; i++) fprintf(stderr, " ");
+  for (int i = 1; i < column + 6; i++) fprintf(stderr, " ");
   fprintf(stderr, "^\nerror: %s\n", msg);
   exit(-2);
 }
@@ -88,7 +89,11 @@ long long Number;
 std::string StrToken;
 
 int counter;
-std::map<std::string, long long> label;
+std::map<std::string, long long> label; // used for 'jump' instruction
+
+bool isidentifier(int c) {
+  return isalpha(c) || isdigit(c) || c == '_' || c == '-';
+}
 
 void nextToken(int take_place = 1) {
 #define MAXBUFFER 256
@@ -97,74 +102,79 @@ void nextToken(int take_place = 1) {
   if (p_code == code) c = ' ';
   while (1) {
     while (isspace(c) && c != EOF) c = nextChar();
-    if (c == ';') while (c != '\n' || c != EOF) c = nextChar();
+    if (c == ';') while (c != '\n' && c != EOF) c = nextChar();
     else break;
   }
   if (c == EOF) {
     CurToken = tok_eof;
     return;
   }
-  if (! isalpha(c) && ! isdigit(c)) {
+  if (! isidentifier(c)) {
     CurToken = c;
+    c = nextChar();
     return;
   }
 
   int len = 0;
-  while (isalpha(c) || isdigit(c)) {
+  while (isidentifier(c)) {
     s[len++] = c;
     if (len + 2 >= MAXBUFFER) report_compile_error("identifier too long.");
+    c = nextChar();
   }
   s[len] = 0;
 #undef MAXBUFFER
 
+  //fprintf(stderr, "%s at %d\n", s, counter);
   if (take_place) counter++; // !
 
   int isNum = 1;
   for (int i = 0; i < len; i++) 
-    if (! isdigit(s[i])) {isNum = 0; break;}
+    if (! isdigit(s[i]) && s[i] != '-') {isNum = 0; break;}
   if (isNum) {
     if (1 != sscanf(s, "%lld", &Number)) report_compile_error("unknown number.");
+    CurToken = tok_num;
     return;
   }
 
   CurToken = tok_eof;
-  if (! strcmp(s, "LOD")) Number = LOD;
-  if (! strcmp(s, "IMM")) Number = IMM;
-  if (! strcmp(s, "LEA")) Number = LEA;
-  if (! strcmp(s, "JMP")) Number = JMP;
-  if (! strcmp(s, "JZ" )) Number = JZ;
+  if      (! strcmp(s, "LOD")) Number = LOD, CurToken = tok_num;
+  else if (! strcmp(s, "IMM")) Number = IMM, CurToken = tok_num;
+  else if (! strcmp(s, "LEA")) Number = LEA, CurToken = tok_num;
+  else if (! strcmp(s, "JMP")) Number = JMP, CurToken = tok_num;
+  else if (! strcmp(s, "JZ" )) Number = JZ , CurToken = tok_num;
   
-  if (! strcmp(s, "JNZ")) Number = JNZ;
-  if (! strcmp(s, "STO")) Number = STO;
-  if (! strcmp(s, "PSH")) Number = PSH;
-  if (! strcmp(s, "ENT")) Number = ENT;
-  if (! strcmp(s, "LEV")) Number = LEV;
+  else if (! strcmp(s, "JNZ")) Number = JNZ, CurToken = tok_num;
+  else if (! strcmp(s, "STO")) Number = STO, CurToken = tok_num;
+  else if (! strcmp(s, "PSH")) Number = PSH, CurToken = tok_num;
+  else if (! strcmp(s, "ENT")) Number = ENT, CurToken = tok_num;
+  else if (! strcmp(s, "LEV")) Number = LEV, CurToken = tok_num;
   
-  if (! strcmp(s, "CALL")) Number = CALL;
-  if (! strcmp(s, "EXIT")) Number = EXIT;
+  else if (! strcmp(s, "CALL")) Number = CALL, CurToken = tok_num;
+  else if (! strcmp(s, "EXIT")) Number = EXIT, CurToken = tok_num;
+  else if (! strcmp(s, "ADJ"))  Number = ADJ,  CurToken = tok_num;
 
   /* ------------------------------ */
-  if (! strcmp(s, "ADD")) Number = ADD;
-  if (! strcmp(s, "SUB")) Number = SUB;
-  if (! strcmp(s, "MUL")) Number = MUL;
-  if (! strcmp(s, "DIV")) Number = DIV;
-  if (! strcmp(s, "MOD")) Number = MOD;
+  else if (! strcmp(s, "ADD")) Number = ADD, CurToken = tok_num;
+  else if (! strcmp(s, "SUB")) Number = SUB, CurToken = tok_num;
+  else if (! strcmp(s, "MUL")) Number = MUL, CurToken = tok_num;
+  else if (! strcmp(s, "DIV")) Number = DIV, CurToken = tok_num;
+  else if (! strcmp(s, "MOD")) Number = MOD, CurToken = tok_num;
 
-  if (! strcmp(s, "EQ")) Number = EQ;
-  if (! strcmp(s, "NE")) Number = NE;
-  if (! strcmp(s, "LT")) Number = LT;
-  if (! strcmp(s, "GT")) Number = GT;
-  if (! strcmp(s, "LE")) Number = LE;
+  else if (! strcmp(s, "EQ")) Number = EQ, CurToken = tok_num;
+  else if (! strcmp(s, "NE")) Number = NE, CurToken = tok_num;
+  else if (! strcmp(s, "LT")) Number = LT, CurToken = tok_num;
+  else if (! strcmp(s, "GT")) Number = GT, CurToken = tok_num;
+  else if (! strcmp(s, "LE")) Number = LE, CurToken = tok_num;
 
-  if (! strcmp(s, "GE")) Number = GE;
-  if (! strcmp(s, "SHL")) Number = SHL;
-  if (! strcmp(s, "SHR")) Number = SHR;
+  else if (! strcmp(s, "GE" )) Number = GE , CurToken = tok_num;
+  else if (! strcmp(s, "SHL")) Number = SHL, CurToken = tok_num;
+  else if (! strcmp(s, "SHR")) Number = SHR, CurToken = tok_num;
 
   /* ------------------------------ */
-  if (! strcmp(s, "RINT")) Number = RINT;
-  if (! strcmp(s, "WINT")) Number = WINT;
-  if (! strcmp(s, "GETC")) Number = GETC;
-  if (! strcmp(s, "PUTC")) Number = PUTC;
+  else if (! strcmp(s, "RINT")) Number = RINT, CurToken = tok_num;
+  else if (! strcmp(s, "WINT")) Number = WINT, CurToken = tok_num;
+  else if (! strcmp(s, "GETC")) Number = GETC, CurToken = tok_num;
+  else if (! strcmp(s, "PUTC")) Number = PUTC, CurToken = tok_num;
   if (CurToken != tok_eof) return;
 
   StrToken.assign(s);
@@ -195,28 +205,34 @@ int main(int argc, char* argv[]) {
   argument(argc, argv);
   for (int i = 0; i < 2; i++) {
     init();
-    if      (CurToken == tok_num) {
-      if (i) text.push_back(Number);
-      nextToken();
-    }
-    else if (CurToken == '@') {
-      nextToken(0);
-      if (CurToken != tok_label && i == 0) report_compile_error("expected label");
-      std::string s = StrToken;
-      nextToken(0);
-      if (CurToken == '=') {
+    while (1) {
+      if      (CurToken == tok_num) {
+        if (i) text.push_back(Number);
+        nextToken();
+      }
+      else if (CurToken == '@') {
         nextToken(0);
-        if (i == 0) {
-          if (CurToken != tok_num) report_compile_error("expected number");
-          label[s] = Number;
+        int location = counter; // jump to location
+        if (CurToken != tok_label && i == 0) report_compile_error("expected label");
+        std::string s = StrToken;
+        nextToken();
+        if (CurToken == '=') {
+          nextToken(0);
+          if (i == 0) {
+            if (CurToken != tok_num) report_compile_error("expected number");
+            label[s] = Number;
+          }
+          nextToken();
         }
-        nextToken(0);
+        else if (i == 0) {
+          //fprintf(stderr, "%s -> %d\n", s.c_str(), counter);
+          label[s] = location;
+        }
       }
-      else if (i == 0) {
-        label[s] = counter;
-      }
+      else if (CurToken == tok_eof) break;
+      else if (i == 0) nextToken();
+      else report_compile_error("unknown token");
     }
-    else report_compile_error("unknown token");
   }
   delete []code;
   
@@ -233,8 +249,9 @@ int main(int argc, char* argv[]) {
     }
     printf("};\n");
     printf("int main() {\n"
-        "for (int i = 0; i < %d; i++) m[i] = text[i];\n", (int) text.size());
-    printf("VMRun(0); return 0;}");
+        "int i; for (i = 0; i < %d; i++) m[i] = text[i];\n", (int) text.size());
+    printf("VMRun();\n" 
+        "return 0;}\n");
   }
 
   return 0;

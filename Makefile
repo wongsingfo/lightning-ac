@@ -4,5 +4,5 @@ CXXFLAGS	= -g
 
 all: vm
 
-vm: vm.cpp vm.h
+vm: vm.cpp vm.h instruction.h
 	$(CXX) vm.cpp -o vm -Wall $(CXXFLAGS)

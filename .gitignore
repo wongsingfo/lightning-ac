@@ -1,4 +1,10 @@
 *.exe
 *.swp
 ~*
+*.stackdump
+*~
+status.txt
+
+#here will ignore all c files
+*.c 
 

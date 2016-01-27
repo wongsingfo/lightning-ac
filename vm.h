@@ -1,5 +1,6 @@
 #ifndef ONLINE_JUDGE
 #define errorp(...) fprintf(stderr, __VA_ARGS__)
+#define vmdebug
 #else
 #define errorp(...) ;
 #endif
@@ -9,7 +10,7 @@ long long m[MemoryPool];
 enum {
   LOD = 100, IMM, LEA, JMP, JZ, 
   JNZ, STO, PSH, ENT, LEV,
-  CALL,EXIT, 
+  CALL,EXIT, ADJ
 };
 
 enum operation {
@@ -22,20 +23,47 @@ enum systemFunction {
   RINT = 300, WINT, GETC, PUTC
 };
 
-int VMRun(int debug) {
+#ifdef vmdebug
+#include "instruction.h"
+#endif
+
+int VMRun() {
   long long i;
   long long cur = 0;
-  long long bp, sp = MemoryPool - 1; // stack pointer
+  long long bp = MemoryPool; // bottom pointer
+  long long sp = MemoryPool; // stack pointer
   long long reg; // only one register
+
+  m[--sp] = EXIT; // call exit if main exit
+  m[--sp] = PSH; 
+  sp--; m[sp] = sp + 1;
   
+#ifdef vmdebug
+  int cycle = 1;
+#endif
   while (1) {
     i = m[cur++]; // instruction
+#ifdef vmdebug
+#ifdef debugregister
+    fprintf(stderr, "-------------------------------------register: %lld\n", reg);
+#endif
+#ifdef debugcurrent
+    fprintf(stderr, "-------------------------------------current: %lld\n", cur);
+#endif
+#ifdef debugstack
+    int j;
+    fprintf(stderr, "-----------------stack:");
+    for (j = MemoryPool - 1; j >= sp; j--) fprintf(stderr, "%lld ", m[j]);
+    fprintf(stderr, "\n");
+#endif
+    print_instruction(stderr, cycle++, i, m[cur]);
+#endif
     // load 
     if      (i == LOD) reg = m[reg];
     // load immediately or global address
     else if (i == IMM) reg = m[cur++];
     // load local address
-    else if (i == LEA) reg = bp - m[cur++];
+    else if (i == LEA) reg = bp + m[cur++];
     // jump
     else if (i == JMP) cur = m[cur];
     // jump equal zero
@@ -43,17 +71,19 @@ int VMRun(int debug) {
     // jump not equal zero
     else if (i == JNZ) if (reg) cur = m[cur]; else cur++;
     // store 
-    else if (i == STO) m[m[cur]++] = reg;
+    else if (i == STO) m[m[sp++]] = reg;
     // push
     else if (i == PSH) m[--sp] = reg;
     // enter subroutine
     else if (i == ENT) {m[--sp] = bp; bp = sp; sp -= m[cur++];}
     // leave subroutine
-    else if (i == LEV) {sp = bp, bp = m[++sp]; cur = m[++sp];}
+    else if (i == LEV) {sp = bp, bp = m[sp++]; cur = m[sp++];}
     // jump to subroutine, call function
     else if (i == CALL) {m[--sp] = cur; cur = m[cur];}
     // exit
-    else if (i == EXIT) {errorp("exit(%lld)\n", reg); break;}
+    else if (i == EXIT) {errorp("exit(%lld)\n", m[sp]); break;}
+    // adjust stack
+    else if (i == ADJ) sp += m[cur++];
 
     // ==================== operation   ======================
     else if (i == ADD) reg = m[sp++] + reg;
