@@ -38,17 +38,11 @@ int VMRun() {
   m[--sp] = PSH; 
   sp--; m[sp] = sp + 1;
   
-#ifdef vmdebug
-  int cycle = 1;
-#endif
   while (1) {
     i = m[cur++]; // instruction
 #ifdef vmdebug
 #ifdef debugregister
     fprintf(stderr, "-------------------------------------register: %lld\n", reg);
-#endif
-#ifdef debugcurrent
-    fprintf(stderr, "-------------------------------------current: %lld\n", cur);
 #endif
 #ifdef debugstack
     int j;
@@ -56,7 +50,7 @@ int VMRun() {
     for (j = MemoryPool - 1; j >= sp; j--) fprintf(stderr, "%lld ", m[j]);
     fprintf(stderr, "\n");
 #endif
-    print_instruction(stderr, cycle++, i, m[cur]);
+    print_instruction(stderr, cur - 1, i, m[cur]);
 #endif
     // load 
     if      (i == LOD) reg = m[reg];
@@ -79,7 +73,7 @@ int VMRun() {
     // leave subroutine
     else if (i == LEV) {sp = bp, bp = m[sp++]; cur = m[sp++];}
     // jump to subroutine, call function
-    else if (i == CALL) {m[--sp] = cur; cur = m[cur];}
+    else if (i == CALL) {m[--sp] = cur + 1; cur = m[cur];}
     // exit
     else if (i == EXIT) {errorp("exit(%lld)\n", m[sp]); break;}
     // adjust stack

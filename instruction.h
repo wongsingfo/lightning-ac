@@ -14,6 +14,7 @@ void print_instruction(FILE* stream, int line, long long i, long long j) {
 
   else if (i == CALL) fprintf(stream, "CALL");
   else if (i == EXIT) fprintf(stream, "EXIT");
+  else if (i == ADJ) fprintf(stream, "ADJ");
 
   else if (i == ADD) fprintf(stream, "ADD");
   else if (i == SUB) fprintf(stream, "SUB");

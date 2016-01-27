@@ -1,0 +1,39 @@
+; output max(0, a - (c + b - 1) / b)
+
+@a = 1000;
+@b = 1001;
+@c = 1002;
+@t = 1003;
+
+@main
+ENT 0
+
+; read a, b, c
+IMM c PSH
+IMM b PSH
+IMM a PSH
+RINT STO RINT STO RINT STO
+
+; calc t = a - (c + b - 1) / b
+IMM t PSH
+  IMM a LOD PSH
+    IMM c LOD PSH
+      IMM b LOD
+    ADD PSH
+      IMM 1
+    SUB PSH
+      IMM b LOD 
+    DIV
+  SUB
+STO
+
+; if t < 0
+IMM t LOD PSH
+  IMM 0
+LT
+
+JZ out
+IMM 0 WINT LEV
+@out
+IMM t LOD WINT
+LEV
