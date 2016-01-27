@@ -31,7 +31,9 @@ void print_instruction(FILE* stream, int line, long long i, long long j) {
   else if (i == GE ) fprintf(stream, "GE");
   else if (i == SHL) fprintf(stream, "SHL");
   else if (i == SHR) fprintf(stream, "SHR");
-  
+  else if (i == INC) fprintf(stream, "INC");
+  else if (i == DEC) fprintf(stream, "DEC");
+
   else if (i == RINT) fprintf(stream, "RINT");
   else if (i == WINT) fprintf(stream, "WINT");
   else if (i == GETC) fprintf(stream, "GETC");

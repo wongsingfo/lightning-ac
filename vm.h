@@ -16,7 +16,7 @@ enum {
 enum operation {
   ADD = 200, SUB, MUL, DIV, MOD, 
   EQ, NE, LT, GT, LE, 
-  GE, SHL, SHR
+  GE, SHL, SHR, INC, DEC, 
 };
 
 enum systemFunction {
@@ -93,6 +93,8 @@ int VMRun() {
     else if (i == GE) reg = m[sp++] >= reg;
     else if (i == SHL) reg = m[sp++] << reg;
     else if (i == SHR) reg = m[sp++] >> reg;
+    else if (i == INC) reg++;
+    else if (i == DEC) reg--;
 
     // ==================== system call ======================
     else if (i == RINT) scanf("%lld", &reg);

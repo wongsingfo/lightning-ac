@@ -169,6 +169,8 @@ void nextToken(int take_place = 1) {
   else if (! strcmp(s, "GE" )) Number = GE , CurToken = tok_num;
   else if (! strcmp(s, "SHL")) Number = SHL, CurToken = tok_num;
   else if (! strcmp(s, "SHR")) Number = SHR, CurToken = tok_num;
+  else if (! strcmp(s, "INC")) Number = INC, CurToken = tok_num;
+  else if (! strcmp(s, "DEC")) Number = DEC, CurToken = tok_num;
 
   /* ------------------------------ */
   else if (! strcmp(s, "RINT")) Number = RINT, CurToken = tok_num;
