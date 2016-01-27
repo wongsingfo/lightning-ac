@@ -9,8 +9,7 @@
 
 std::vector<long long> text;
 
-enum {submit = 1, interpre, debug};
-int Todo;
+enum Tool {submit = 1, interpret, debug} Todo;
 char* code;
 char* p_code;
 
@@ -22,7 +21,7 @@ void printHelp() {
         "\n"
         "usage:\n"
         "  s    generate a code for submission online\n"
-        "  i    interpre\n"
+        "  i    interpret\n"
         //"  d    debug\n"
         "\n"
         "example:\n"
@@ -35,7 +34,7 @@ void argument(int argc, char* argv[]) {
   if (argc != 3) {printHelp(); report("no input.\n");}
 
   if (argv[1][0] == 's') Todo = submit;
-  else if (argv[1][0] == 'i') Todo = interpre;
+  else if (argv[1][0] == 'i') Todo = interpret;
   else if (argv[1][0] == 'd') Todo = debug;
 
   if (! Todo) report("nothing to be done.\n");
@@ -255,7 +254,7 @@ int main(int argc, char* argv[]) {
     printf("VMRun();\n" 
         "return 0;}\n");
   }
-  else if (Todo == interpre) {
+  else if (Todo == interpret) {
     for (int i = 0, _i = (int) text.size(); i < _i; i++) m[i] = text[i];
     VMRun();
   }
