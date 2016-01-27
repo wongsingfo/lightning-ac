@@ -194,7 +194,7 @@ void init() {
 }
 
 void cat(const char* const s) {
-  if (FILE* f = fopen(s, "r")) {
+  if (FILE* f = fopen(s, "rb")) {
     int t;
     while (EOF != (t = fgetc(f))) putchar(t);
     if (fclose(f)) report("couldn't close file '%s'", s);
