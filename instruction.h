@@ -24,14 +24,16 @@ void print_instruction(FILE* stream, int line, long long i, long long j) {
 
   else if (i == EQ ) fprintf(stream, "EQ");
   else if (i == NE ) fprintf(stream, "NE");
+  else if (i == XOR) fprintf(stream, "XOR");
   else if (i == LT ) fprintf(stream, "LT");
   else if (i == GT ) fprintf(stream, "RT");
+
   else if (i == LE ) fprintf(stream, "LE");
-  
   else if (i == GE ) fprintf(stream, "GE");
   else if (i == SHL) fprintf(stream, "SHL");
   else if (i == SHR) fprintf(stream, "SHR");
   else if (i == INC) fprintf(stream, "INC");
+
   else if (i == DEC) fprintf(stream, "DEC");
 
   else if (i == RINT) fprintf(stream, "RINT");

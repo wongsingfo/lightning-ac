@@ -15,8 +15,9 @@ enum {
 
 enum operation {
   ADD = 200, SUB, MUL, DIV, MOD, 
-  EQ, NE, LT, GT, LE, 
-  GE, SHL, SHR, INC, DEC, 
+  EQ, NE, XOR, LT, GT, 
+  LE, GE, SHL, SHR, INC, 
+  DEC, 
 };
 
 enum systemFunction {
@@ -87,6 +88,7 @@ int VMRun() {
     else if (i == MOD) reg = m[sp++] % reg;
     else if (i == EQ) reg = m[sp++] == reg;
     else if (i == NE) reg = m[sp++] != reg;
+    else if (i == XOR)reg = m[sp++] ^ reg;
     else if (i == LT) reg = m[sp++] < reg;
     else if (i == GT) reg = m[sp++] > reg;
     else if (i == LE) reg = m[sp++] <= reg;

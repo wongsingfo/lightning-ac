@@ -61,7 +61,7 @@ void report_compile_error(const char* const msg) {
   while (*line_front != '\n' && *line_front) 
     fprintf(stderr, "%c", *line_front++);
   fprintf(stderr, "\n");
-  for (int i = 1; i < column + 6; i++) fprintf(stderr, " ");
+  for (int i = 1; i < column + 5; i++) fprintf(stderr, " ");
   fprintf(stderr, "^\nerror: %s\n", msg);
   exit(-2);
 }
@@ -161,14 +161,16 @@ void nextToken(int take_place = 1) {
 
   else if (! strcmp(s, "EQ")) Number = EQ, CurToken = tok_num;
   else if (! strcmp(s, "NE")) Number = NE, CurToken = tok_num;
+  else if (! strcmp(s, "XOR"))Number = XOR,CurToken = tok_num;
   else if (! strcmp(s, "LT")) Number = LT, CurToken = tok_num;
   else if (! strcmp(s, "GT")) Number = GT, CurToken = tok_num;
-  else if (! strcmp(s, "LE")) Number = LE, CurToken = tok_num;
 
+  else if (! strcmp(s, "LE")) Number = LE, CurToken = tok_num;
   else if (! strcmp(s, "GE" )) Number = GE , CurToken = tok_num;
   else if (! strcmp(s, "SHL")) Number = SHL, CurToken = tok_num;
   else if (! strcmp(s, "SHR")) Number = SHR, CurToken = tok_num;
   else if (! strcmp(s, "INC")) Number = INC, CurToken = tok_num;
+
   else if (! strcmp(s, "DEC")) Number = DEC, CurToken = tok_num;
 
   /* ------------------------------ */
