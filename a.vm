@@ -1,68 +1,97 @@
-; Tower of Hanoi 
-; > Sample Input
-;     > 2 a b c
-; > Sample Output
-;     > a->1->c
-;     > a->2->b
-;     > c->1->b
+@n_address = 999
+@start = 1000
 
-JMP main
 
-; move from a to b with the help of c
-@dfs ENT 0 ;(n a b c)
-      ; n @ bp + 5
-      ; a @ bp + 4
-      ; b @ bp + 3
-      ; c @ bp + 2
-      ; jumpform @ bp + 1
-      ; bptemp @ bp
+@main ENT 2
+  LEA -2 PSH 
+    IMM n_address PSH RINT STO 
+    PSH IMM start ADD
+  STO
 
-  ; if n == 0 return
-    LEA 5 LOD
-    JNZ dfs_else LEV
+  LEA -1 PSH IMM start STO
+  @main_for_1
+    LEA -1 
+      PSH LOD PSH
+        PSH RINT STO
+      IMM 1 ADD STO
+    PSH LEA -2 LOD EQ JZ main_for_1
 
-  ; else
-  @dfs_else
-    ; dfs(n - 1, a, c, b)
-    
-    LEA 5 LOD PSH
-      IMM 1
-    SUB PSH
-    LEA 4 LOD PSH
+
+  IMM start PSH
+  LEA -2 LOD DEC PSH
+  CALL sort
+  ADJ 2
+
+  LEA -1 PSH IMM start STO
+  @main_for_2
+    LEA -1
+      PSH LOD PSH
+        LOD WINT
+      IMM 1 ADD STO
+    PSH LEA -2 LOD EQ JNZ main_return
+    IMM 32 PUTC
+    JMP main_for_2
+  @main_return
+  IMM 10 PUTC
+LEV
+
+; below is the recurtion 
+
+@sort ENT 4
+  ; if l == r return
+  LEA 2 LOD PSH LEA 3 LOD EQ JNZ sort_return
+
+  LEA -3 PSH
     LEA 2 LOD PSH
-    LEA 3 LOD PSH
-    CALL dfs
-    ADJ 4
-    
-    ; output a->n->c
-    LEA 4 LOD PUTC
-    IMM 45 PUTC ;char '-'
-    IMM 62 PUTC ;char '>'
-    LEA 5 LOD WINT
-    IMM 45 PUTC ;char '-'
-    IMM 62 PUTC ;char '>'
-    LEA 3 LOD PUTC
-    IMM 10 PUTC ;char '\n'
+      LEA 3 LOD
+    ADD PSH
+    IMM 1 SHR 
 
-    ; dfs(n - 1, c, b, a)
-    LEA 5 LOD PSH
-      IMM 1
-    SUB PSH
-    LEA 2 LOD PSH
-    LEA 3 LOD PSH
-    LEA 4 LOD PSH
-    CALL dfs
-    ADJ 4
+    LOD
+  STO
 
-    LEV
+  LEA -1 PSH LEA 3 LOD STO 
+  LEA -2 PSH LEA 2 LOD STO
 
+  @sort_repeat
+    @sort_while_1
+    LEA -1 LOD LOD PSH LEA -3 LOD LT JZ sort_while_1_end
+    LEA -1 PSH LOD INC STO
+    JMP sort_while_1
+    @sort_while_1_end
 
-@main ENT 0
-  RINT PSH
-  GETC GETC PSH;
-  GETC GETC PSH; 
-  GETC GETC PSH;
-  CALL dfs
-  ADJ 4
+    @sort_while_2
+    LEA -2 LOD LOD PSH LEA -3 LOD GT JZ sort_while_2_end
+    LEA -2 PSH LOD DEC STO
+    JMP sort_while_2
+    @sort_while_2_end
+
+    @sort_if_1
+    LEA -1 LOD PSH LEA -2 LOD LE JZ sort_if_1_end
+    ; swap here ! 
+    LEA -4     PSH LEA -1 LOD LOD STO
+    LEA -1 LOD PSH LEA -2 LOD LOD STO
+    LEA -2 LOD PSH LEA -4 LOD     STO
+
+    ; end swap
+
+    LEA -1 PSH LOD INC STO
+    LEA -2 PSH LOD DEC STO
+    @sort_if_1_end
+
+    ; if i <= j 
+    LEA -1 LOD PSH LEA -2 LOD LE JNZ sort_repeat
+
+  @sort_if_2
+  LEA 3 LOD PSH LEA -2 LOD LT JZ sort_if_2_end
+  LEA 3 LOD PSH LEA -2 LOD PSH CALL sort ADJ 2; sort(l, j)
+  @sort_if_2_end
+
+  @sort_if_3
+  LEA -1 LOD PSH LEA 2 LOD LT JZ sort_if_3_end
+  LEA -1 LOD PSH LEA 2 LOD PSH CALL sort ADJ 2; sort(i, r)
+  @sort_if_3_end
+
+  @sort_return
   LEV
 

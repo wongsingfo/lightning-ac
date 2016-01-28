@@ -4,6 +4,8 @@
 *.stackdump
 *~
 status.txt
+input.txt
+output.txt
 
 #here will ignore all c files
 *.c 

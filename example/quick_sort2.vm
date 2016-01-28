@@ -1,0 +1,236 @@
+; by yrz
+@data_start=1000
+
+JMP main
+
+@read ENT 1
+
+;store the data start at data_start
+IMM data_start
+PSH
+RINT
+STO
+
+; init the counter
+LEA -1 PSH ; the address of -1
+IMM 1
+STO
+
+; the cycle
+@while_1
+LEA -1 LOD PSH
+IMM data_start LOD
+LE JZ _LEV
+
+LEA -1 LOD PSH
+IMM data_start
+ADD
+PSH
+RINT
+STO
+
+LEA -1 PSH
+LOD PSH
+IMM 1
+ADD
+STO
+
+JMP while_1
+
+LEV
+
+@sort ENT 4
+
+;distribute
+;left
+LEA -1 PSH
+LEA 3 LOD
+STO
+;right
+LEA -2 PSH
+LEA 2 LOD
+STO
+;mid
+LEA -3 PSH ;address of mid
+LEA -1 LOD PSH
+LEA -2 LOD
+ADD
+PSH
+IMM 2
+DIV
+PSH
+IMM data_start
+ADD
+LOD
+STO
+
+
+@repeat_1
+
+	@while_left
+		LEA -1 LOD PSH
+		IMM data_start
+		ADD
+		LOD
+		PSH
+		LEA -3 LOD
+		LT
+		JZ exit_while_left
+		LEA -1 PSH LOD PSH
+		IMM 1
+		ADD
+		STO
+		JMP while_left
+	@exit_while_left
+	
+	@while_right
+		LEA -2 LOD PSH
+		IMM data_start
+		ADD
+		LOD
+		PSH
+		LEA -3 LOD
+		GT
+		JZ exit_while_right
+		LEA -2 PSH LOD PSH
+		IMM 1
+		SUB
+		STO
+		JMP while_right
+	@exit_while_right
+
+	@if_1
+		LEA -1 LOD PSH
+		LEA -2 LOD
+		LE
+		JZ exit_if_1
+		LEA -1 LOD PSH
+		IMM data_start
+		ADD
+		PSH ; address of 1
+		LEA -4 PSH; address of w
+		LEA -1 LOD PSH
+		IMM data_start
+		ADD
+		LOD; value of 1
+		STO; to w
+		LEA -2 LOD PSH
+		IMM data_start
+		ADD
+		LOD
+		STO; to 1
+		LEA -2 LOD PSH
+		IMM data_start
+		ADD
+		PSH
+		LEA -4 LOD
+		STO; to 2
+
+		LEA -1 PSH
+		LOD PSH
+		IMM 1
+		ADD
+		STO
+
+		LEA -2 PSH
+		LOD PSH
+		IMM 1
+		SUB
+		STO
+	@exit_if_1
+
+LEA -1 LOD PSH
+LEA -2 LOD
+LE
+JNZ repeat_1
+
+@if_left
+LEA 3 LOD PSH
+LEA -2 LOD
+LT
+JZ exit_if_left
+LEA 3 LOD
+PSH
+LEA -2 LOD
+PSH
+CALL sort
+@exit_if_left
+
+@if_right
+LEA -1 LOD PSH
+LEA 2 LOD
+LT
+JZ exit_if_right
+LEA -1 LOD
+PSH
+LEA 2 LOD
+PSH
+CALL sort
+@exit_if_right
+
+ADJ 2
+LEV
+
+@print ENT 1
+
+LEA -1 PSH
+IMM 1
+STO
+
+LEA -1 LOD PSH
+IMM data_start
+ADD
+LOD
+WINT
+
+LEA -1 PSH
+LOD PSH
+IMM 1
+ADD
+STO
+
+@while_print
+LEA -1 LOD PSH
+IMM data_start
+LOD
+LE
+JZ exit_while_print
+
+IMM 32 PUTC
+
+LEA -1 LOD PSH
+IMM data_start
+ADD
+LOD
+WINT
+
+LEA -1 PSH
+LOD PSH
+IMM 1
+ADD
+STO
+JMP while_print
+@exit_while_print
+
+IMM 10 PUTC
+
+LEV
+
+@main ENT 0
+
+CALL read
+
+IMM 1
+PSH
+IMM data_start
+LOD PSH 
+
+CALL sort
+
+CALL print
+
+LEV
+
+
+@_LEV
+LEV
