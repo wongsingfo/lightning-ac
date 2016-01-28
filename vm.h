@@ -1,3 +1,9 @@
+#ifdef as_header
+void debug_handle(int cur, long long reg, int sp);
+void debug_scanf(long long &reg);
+void debug_getchar(long long &reg);
+#endif
+
 #ifndef ONLINE_JUDGE
 #define errorp(...) fprintf(stderr, __VA_ARGS__)
 //#define vmdebug
@@ -40,6 +46,10 @@ int VMRun() {
   sp--; m[sp] = sp + 1;
   
   while (1) {
+#ifdef as_header
+    debug_handle(cur, reg, sp);
+#endif
+
     i = m[cur++]; // instruction
 #ifdef vmdebug
 #ifdef debugregister
@@ -99,9 +109,19 @@ int VMRun() {
     else if (i == DEC) reg--;
 
     // ==================== system call ======================
-    else if (i == RINT) scanf("%lld", &reg);
+    else if (i == RINT) 
+#ifdef as_header
+      debug_scanf(reg);
+#else
+      scanf("%lld", &reg);
+#endif
     else if (i == WINT) printf("%lld", reg);
-    else if (i == GETC) reg = getchar();
+    else if (i == GETC)
+#ifdef as_header
+      debug_getchar(reg);
+#else
+      reg = getchar();
+#endif
     else if (i == PUTC) putchar(reg);
     else {errorp("unknown instruction = %lld\n", i); return -1;}
   }

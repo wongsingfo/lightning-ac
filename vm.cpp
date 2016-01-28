@@ -5,13 +5,22 @@
 #include <vector>
 #include <string>
 #define MemoryPool 0x100000 * 1
+
+#ifndef as_header
+#define as_header
 #include "vm.h"
+#include "instruction.h"
+#undef as_header
+#endif 
 
 std::vector<long long> text;
+std::vector<long long> text_line;
+std::vector<char*> line_front;
 
 enum Tool {submit = 1, interpret, debug} Todo;
 char* code;
 char* p_code;
+FILE* inputFile;
 
 void printHelp() {
   printf("exit code:\n"
@@ -22,20 +31,23 @@ void printHelp() {
         "usage:\n"
         "  s    generate a code for submission online\n"
         "  i    interpret\n"
-        //"  d    debug\n"
+        "  d    debug\n"
         "\n"
         "example:\n"
-        "  ./vm s code.vm\n");
+        "  ./vm s code.vm input.txt\n");
 }
 
 #define report(...) fprintf(stderr, __VA_ARGS__), exit(-1)
 
 void argument(int argc, char* argv[]) {
-  if (argc != 3) {printHelp(); report("no input.\n");}
+  if (argc != 3 && argc != 4) {printHelp(); report("no input.\n");}
 
   if (argv[1][0] == 's') Todo = submit;
   else if (argv[1][0] == 'i') Todo = interpret;
-  else if (argv[1][0] == 'd') Todo = debug;
+  else if (argv[1][0] == 'd') {
+    Todo = debug;
+    if (argc != 4) report("debug mode need an input file.\n");
+  }
 
   if (! Todo) report("nothing to be done.\n");
   char* fileName = argv[2];
@@ -47,20 +59,28 @@ void argument(int argc, char* argv[]) {
     if (fseek(input, 0, SEEK_SET)) report_close("seek_set error.\n");
     if (lenCode != (int) fread(code, 1, lenCode, input)) report_close("couldn't read the code!\n");
     code[lenCode] = 0; // append '\0'
-    if (fclose(input)) report("couldn't close '%s'", fileName);
+    if (fclose(input)) report("couldn't close '%s'\n", fileName);
   }
-  else report("couldn't open '%s'", fileName);
+  else report("couldn't open '%s'\n", fileName);
 #undef report_close
+
+  if (argc == 4) {
+   if (! (inputFile = fopen(argv[3], "r"))) report("couldn't open '%s'\n", argv[3]);
+  }
 }
 
 int line, column;
-char* line_front;
+
+void print_code_line(int line) {
+  fprintf(stderr, "%4d: ", line);
+  char* front = line_front[line];
+  while (*front!= '\n' && *front) 
+    fprintf(stderr, "%c", *front++);
+  fprintf(stderr, "\n");
+}
 
 void report_compile_error(const char* const msg) {
-  fprintf(stderr, "%4d: ", line);
-  while (*line_front != '\n' && *line_front) 
-    fprintf(stderr, "%c", *line_front++);
-  fprintf(stderr, "\n");
+  print_code_line(line);
   for (int i = 1; i < column + 5; i++) fprintf(stderr, " ");
   fprintf(stderr, "^\nerror: %s\n", msg);
   exit(-2);
@@ -71,7 +91,7 @@ int nextChar() {
   if (p_code == code || *(p_code - 1) == '\n') {
     line++; 
     column = 1;
-    line_front = p_code;
+    line_front.push_back(p_code);
   }
   else column++;
   return *p_code++;
@@ -191,7 +211,14 @@ void nextToken(int take_place = 1) {
 void init() {
   p_code = code;
   line = column = 0;
+  line_front.clear();
+  line_front.push_back(0); // start from 1
   nextToken();
+}
+
+void clean() {
+  delete []code;
+  if (inputFile) fclose(inputFile);
 }
 
 void cat(const char* const s) {
@@ -204,13 +231,117 @@ void cat(const char* const s) {
   else report("couldn't find '%s'", s);
 }
 
+void debug_scanf(long long &x) {
+  if (inputFile) fscanf(inputFile, "%lld", &x);
+  else scanf("%lld", &x);
+}
+
+void debug_getchar(long long &x) {
+  if (inputFile) x = fgetc(inputFile);
+  else x = getchar();
+}
+
+void debug_handle(int cur, long long reg, int sp) {
+  if (Todo != debug) return;
+  if (cur < 0 || cur >= (int) text.size()) {
+    // the bottom of the stack is PSH EXIT
+    if (cur != MemoryPool - 1 &&
+        cur != MemoryPool - 2)
+      fprintf(stderr, "debug error: the %%cur beyond the text.\n");
+    return;
+  }
+  int curLine = text_line[cur];
+  static int lastLine = -1;
+  if (curLine == lastLine) return;
+  static int hook = -1; // use for setting a breakpoint
+  if (hook != -1) {
+    if (curLine != hook) return;
+    else hook = -1;
+  }
+
+  print_code_line(curLine);
+
+  int command, adr;
+  while (1) {
+    fprintf(stderr, "debug> ");
+    command = getchar();
+    std::string s("");
+
+    if (command != '\n') {
+      adr = 0;
+      do {
+        if (adr != -1) {
+          if (! isdigit(command)) adr = -1;
+          else adr = adr * 10 + (15 & command);
+        }
+        s += command;
+        command = getchar();
+      }while (command != '\n');
+    } 
+    else {
+      adr = -1;
+      s = "n";
+    }
+
+    // next 
+    if      (s == "n") {
+      break;
+    }
+    // quit
+    else if (s == "q") {
+      fprintf(stderr, "quit now.\n");
+      exit(0);
+    }
+    // show reg ans stk
+    else if (s == "p") {
+      fprintf(stderr, "      reg: %6lld stk:", reg);
+      for (int i = MemoryPool - 1; i >= sp; i--) 
+        fprintf(stderr, " %lld", m[i]);
+      fprintf(stderr, "\n");
+    }
+    // show code
+    else if (s == "l") {
+      for (int i = std::max(1, curLine - 10), 
+          _i = std::min(curLine + 10, (int) line_front.size() - 1);
+          i < _i; i++) 
+        print_code_line(i);
+    }
+    // show m[address] or set a breakpoint
+    else if (adr != -1) {
+      if (adr < 0 || adr >= MemoryPool) 
+        fprintf(stderr, "debug error: address beyond the memory.\n");
+      else if (adr >= (int) text.size())
+        fprintf(stderr, "     memory[%d] = %lld\n", adr, m[adr]);
+      else if (adr != curLine) {
+        hook = adr;
+        break;
+      }
+      else 
+        fprintf(stderr, "nothing to do.\n");
+    }
+    // show varible or label
+    else if (label.count(s)) {
+      fprintf(stderr, "     %s = %lld\n", s.c_str(), label[s]);
+    }
+    else {
+      //fprintf(stderr, "nothing to do.\n");
+    }
+  }
+  while (command != '\n') command = getchar();
+
+  lastLine = curLine;
+}
+
 int main(int argc, char* argv[]) {
   argument(argc, argv);
   for (int i = 0; i < 2; i++) {
     init();
     while (1) {
       if      (CurToken == tok_num) {
-        if (i) text.push_back(Number);
+        if (i) {
+          text.push_back(Number);
+          if (Todo == debug) text_line.push_back(line);
+        }
         nextToken();
       }
       else if (CurToken == '@') {
@@ -237,12 +368,11 @@ int main(int argc, char* argv[]) {
       else report_compile_error("unknown token");
     }
   }
-  delete []code;
   
   if (Todo == submit) {
     printf("#include <stdio.h>\n"
            "#include <stdlib.h>\n");
-    printf("#define MemoryPool %d\n", 0x100000 * 10);
+    printf("#define MemoryPool %d\n", (int) 1e6);
     cat("vm.h");
     printf("const long long text[] = {");
     for (int i = 0, _i = text.size(); i < _i; i++) {
@@ -256,10 +386,12 @@ int main(int argc, char* argv[]) {
     printf("VMRun();\n" 
         "return 0;}\n");
   }
-  else if (Todo == interpret) {
+  else if (Todo == interpret || Todo == debug) {
     for (int i = 0, _i = (int) text.size(); i < _i; i++) m[i] = text[i];
     VMRun();
   }
+  else report("nothing to be done.\n");
 
+  clean();
   return 0;
 }
