@@ -79,6 +79,17 @@ void print_code_line(int line) {
   fprintf(stderr, "\n");
 }
 
+bool empty_line(int line) {
+  if (line == (int) line_front.size()) return false;
+  char* front = line_front[line];
+  while (*front!= '\n' && *front) {
+    if (*front == ';') break;
+    if (! isspace(*front)) return false;
+    front++;
+  }
+  return true;
+}
+
 void report_compile_error(const char* const msg) {
   print_code_line(line);
   for (int i = 1; i < column + 5; i++) fprintf(stderr, " ");
@@ -314,6 +325,7 @@ void debug_handle(int cur, long long reg, int sp) {
         fprintf(stderr, "     memory[%d] = %lld\n", adr, m[adr]);
       else if (adr != curLine) {
         hook = adr;
+        while (empty_line(hook)) hook++;
         break;
       }
       else 
