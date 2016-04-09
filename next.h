@@ -1,36 +1,38 @@
 #ifndef NEXT_H
 #define NEXT_H
 
-#include <vector>
-#include <string>
-using namespace std;
 #include "report.h"
 #include "constants.h"
+
+#include <bits/stdc++.h>
+using namespace std;
 
 int curToken;
 int tokNumber;
 string tokString;
 
 enum token {
-  tok_num,
-  tok_opt,
-  tok_str,
+  tok_eof = 1 << 0,
+  tok_num = 1 << 1,
+  tok_opt = 1 << 2,
+  tok_str = 1 << 3,
 };
 
-/* 
- * void loadCode(const char* const file)
- * void printCodeLine(int line)
- * void reportCompileError(const char* const msg)
- */
+void nextToken(int permit = -1);
+void loadCode(const char* const file);
+void printCodeLine(int line);
+void reportCompileError(const char* msg, ...);
+void consume(const char* s, int permit = -1);
 
 static char *code;
+static char *p_code;
 
 static int line, column;
 static vector<char*> line_front;
 
 void loadCode(const char* const file) {
-  FILE* input = fopen(file, "r");
-  if (FILE* input = fopen(fileName, "r")) {
+#define report_close(...) fclose(input), report(__VA_ARGS__)
+  if (FILE* input = fopen(file, "r")) {
     if (fseek(input, 0, SEEK_END)) report_close("seek_end error.\n");
     int lenCode = ftell(input);
     code = new char[lenCode + 1];
@@ -41,12 +43,21 @@ void loadCode(const char* const file) {
     line = column = 0;
   }
   else report("couldn't open '%s'\n", file);
+#undef report_close
+
+  p_code = code;
+  nextToken();
 }
 
-void reportCompileError(const char* const msg) {
-  print_code_line(line);
+void reportCompileError(const char* msg, ...) {
+  printCodeLine(line);
   for (int i = 1; i < column + 5; i++) fprintf(stderr, " ");
-  fprintf(stderr, "^\nerror: %s\n", msg);
+  fprintf(stderr, "^\nerror: ");
+  va_list ap;
+  va_start(ap, msg);
+  fprintf(stderr, msg, ap);
+  va_end(ap);
+  fprintf(stderr, "\n");
   exit(-2);
 }
 
@@ -58,16 +69,18 @@ void printCodeLine(int line) {
   fprintf(stderr, "\n");
 }
 
-static void nextChar() {
+static int nextChar() {
   if (*p_code == '\0') return EOF;
   if (p_code == code || *(p_code - 1) == '\n') {
     line++;
-    column = 1;
+    column = 0;
     line_front.push_back(p_code);
   }
+  column++;
+  return *p_code++;
 }
 
-void nextToken() {
+void nextToken(int permit) {
   static int c;
   if (p_code == code) c = ' ';
   while (isspace(c) && c != EOF) c = nextChar();
@@ -115,6 +128,21 @@ void nextToken() {
       c = nextChar();
     }
   }
+  
+  if ((curToken & permit) == 0) {
+    if (permit == tok_num) reportCompileError("number expected.");
+    else if (permit == tok_str) reportCompileError("string expected.");
+    else if (permit == (tok_str | tok_num))
+      reportCompileError("string/number expected.");
+    else reportCompileError("%d expected.", permit);
+  }
+}
+
+void consume(const char* s, int permit) {
+  nextToken();
+  if (curToken != tok_str || tokString != s) 
+    reportCompileError("%s expected.", s);
+  nextToken(permit);
 }
 
 #endif // NEXT_H

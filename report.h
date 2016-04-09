@@ -1,11 +1,9 @@
 #ifndef REPORT_H
 #define REPORT_H
 
-#define report(...) fprintf(stderr, __VA_ARGS__), exit(-1)
+#include <cstdio>
 
-/*
- * void printHelp()
- */
+#define report(...) fprintf(stderr, __VA_ARGS__), exit(-1)
 
 void printHelp() {
   printf("\n");
