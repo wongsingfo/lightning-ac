@@ -6,10 +6,11 @@
 #include <string>
 #define MemoryPool 0x100000 * 1
 
+#include "instruction.h"
+
 #ifndef as_header
 #define as_header
 #include "vm.h"
-#include "instruction.h"
 #undef as_header
 #endif 
 
@@ -385,6 +386,7 @@ int main(int argc, char* argv[]) {
     printf("#include <stdio.h>\n"
            "#include <stdlib.h>\n");
     printf("#define MemoryPool %d\n", (int) 1e6);
+    cat("instruction.h");
     cat("vm.h");
     printf("const long long text[] = {");
     for (int i = 0, _i = text.size(); i < _i; i++) {

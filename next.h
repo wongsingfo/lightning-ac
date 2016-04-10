@@ -37,7 +37,8 @@ void loadCode(const char* const file) {
     int lenCode = ftell(input);
     code = new char[lenCode + 1];
     if (fseek(input, 0, SEEK_SET)) report_close("seek_set error.\n");
-    if (lenCode != (int) fread(code, 1, lenCode, input)) report_close("couldn't read the code!\n");
+    if (lenCode != (int) fread(code, 1, lenCode, input)) 
+      report_close("couldn't read the code!\n");
     code[lenCode] = 0; // append '\0'
     if (fclose(input)) report("couldn't close '%s'\n", file);
     line = column = 0;
@@ -70,6 +71,7 @@ void printCodeLine(int line) {
 }
 
 static int nextChar() {
+  if (*p_code == '#') while (*p_code != '\n' && *p_code != '\0') p_code++;
   if (*p_code == '\0') return EOF;
   if (p_code == code || *(p_code - 1) == '\n') {
     line++;
@@ -124,6 +126,10 @@ void nextToken(int permit) {
       }
     }
     else if ((c == '<' && s == "<") || (c == '>' && s == ">")) {
+      s += c;
+      c = nextChar();
+    }
+    else if ((c == '|' && s == "|") || (c == '&' && s == "&")) {
       s += c;
       c = nextChar();
     }
